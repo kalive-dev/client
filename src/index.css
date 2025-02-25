@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0px;
+  text-align: center;
+}
+input,
+button {
+  margin: 5px;
+  padding: 8px;
+}
+
