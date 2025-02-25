@@ -7,6 +7,9 @@ API.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+API.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem(
+  "token"
+)}`;
 
 // API запити для списків
 export const fetchTodoLists = () => API.get("/todolists");

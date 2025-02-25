@@ -41,6 +41,12 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
         {error && <p className="mb-4 text-red-500">{error}</p>}
+        <p className="mt-4 text-center">
+          Already have an account?{" "}
+          <a href="/login" className="text-blue-500 hover:underline">
+            Log in
+          </a>
+        </p>
         <button
           onClick={handleRegister}
           className="w-full p-2 text-white bg-blue-500 rounded hover:bg-blue-600"

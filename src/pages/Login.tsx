@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api";
+import { useAuthStore } from "../stores/authStore";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
 
   const handleLogin = async () => {
     try {
-      const { data } = await API.post("/auth/login", { email, password });
-      localStorage.setItem("token", data.data.token);
+      await login(email, password);
       navigate("/dashboard");
     } catch {
       setError("Login failed");
@@ -45,6 +45,12 @@ const Login = () => {
         >
           Login
         </button>
+        <p className="mt-4 text-center">
+          Don't have an account?{" "}
+          <a href="/register" className="text-blue-500 hover:underline">
+            Register
+          </a>
+        </p>
       </div>
     </div>
   );

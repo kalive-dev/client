@@ -1,233 +1,134 @@
 import { useEffect, useState } from "react";
-import {
-  fetchTodoLists,
-  createTodoList,
-  updateTodoList,
-  deleteTodoList,
-  fetchTasks,
-  createTask,
-  updateTask,
-  deleteTask,
-  toggleTaskCompletion,
-} from "../api";
+import { useTodoStore } from "../stores/todoStore";
+import Header from "../components/Header"; // Імпортуємо хедер
 
 const Dashboard = () => {
-  const [lists, setLists] = useState<
-    { id: number; name: string; expanded: boolean; tasks: any[] }[]
-  >([]);
+  const {
+    lists,
+    loadLists,
+    loadTasks,
+    createList,
+    deleteList,
+    createTask,
+    deleteTask,
+    toggleTaskCompletion,
+  } = useTodoStore();
+
   const [listName, setListName] = useState("");
   const [taskName, setTaskName] = useState("");
-  const [taskDescription, setTaskDescription] = useState("");
-
-  const loadLists = async () => {
-    const { data } = await fetchTodoLists();
-    setLists(
-      data.data.map((list: any) => ({ ...list, expanded: false, tasks: [] }))
-    );
-  };
-
-  const loadTasks = async (todolistId: number) => {
-    const { data } = await fetchTasks(todolistId);
-    setLists(
-      lists.map((list) =>
-        list.id === todolistId ? { ...list, tasks: data.data } : list
-      )
-    );
-  };
+  const [activeListId, setActiveListId] = useState<number | null>(null);
 
   useEffect(() => {
     loadLists();
   }, []);
-
-  const handleCreateList = async () => {
-    await createTodoList(listName);
-    setListName("");
-    loadLists();
-  };
-
-  const handleUpdateList = async (id: number, newName: string) => {
-    await updateTodoList(id, newName);
-    loadLists();
-  };
-
-  const handleDeleteList = async (id: number) => {
-    await deleteTodoList(id);
-    loadLists();
-  };
-
-  const handleCreateTask = async (todolistId: number) => {
-    await createTask(todolistId, taskName, taskDescription);
-    setTaskName("");
-    setTaskDescription("");
-    loadTasks(todolistId);
-  };
-
-  const handleUpdateTask = async (
-    todolistId: number,
-    taskId: number,
-    name: string,
-    description: string
-  ) => {
-    await updateTask(todolistId, taskId, name, description);
-    loadTasks(todolistId);
-  };
-
-  const handleDeleteTask = async (todolistId: number, taskId: number) => {
-    await deleteTask(todolistId, taskId);
-    loadTasks(todolistId);
-  };
-
-  const handleToggleTask = async (
-    todolistId: number,
-    taskId: number,
-    completed: boolean
-  ) => {
-    await toggleTaskCompletion(todolistId, taskId, completed);
-    loadTasks(todolistId);
-  };
-
-  const toggleExpand = async (id: number) => {
-    setLists((prevLists) =>
-      prevLists.map((list) =>
-        list.id === id ? { ...list, expanded: !list.expanded } : list
-      )
-    );
-
-    const list = lists.find((list) => list.id === id);
-    if (list && !list.tasks.length) {
-      const { data } = await fetchTasks(id);
-      setLists((prevLists) =>
-        prevLists.map((list) =>
-          list.id === id ? { ...list, tasks: data.data } : list
-        )
-      );
+  const handleToggleList = (listId: number) => {
+    if (activeListId === listId) {
+      setActiveListId(null); // Закрити список, якщо він уже відкритий
+    } else {
+      loadTasks(listId); // Завантажити завдання перед відкриттям
+      setActiveListId(listId); // Відкрити список
     }
   };
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">
+    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
+      <Header />
+      <h2 className="text-3xl font-bold mt-6 text-center text-gray-900">
         Your To-Do Lists
       </h2>
-      <div className="mb-6 flex justify-center">
+      <div className="flex gap-2 my-4">
         <input
           type="text"
-          placeholder="List name"
+          className="border rounded px-3 py-2"
+          placeholder="New list name"
           value={listName}
           onChange={(e) => setListName(e.target.value)}
-          className="p-3 border rounded-lg mr-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
-          onClick={handleCreateList}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onClick={() => {
+            if (listName.trim()) {
+              createList(listName);
+              setListName("");
+            }
+          }}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
-          Create
+          Create List
         </button>
       </div>
-      <ul className="space-y-6">
+      <ul className="w-full max-w-md">
         {lists.map((list) => (
           <li
             key={list.id}
-            className="p-6 bg-white border rounded-lg shadow-sm"
+            className="bg-white shadow rounded p-4 mb-4 flex flex-col"
           >
-            <div className="flex items-center justify-between mb-4">
-              <input
-                type="text"
-                value={list.name}
-                onChange={(e) => handleUpdateList(list.id, e.target.value)}
-                className="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="ml-3 flex space-x-3">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-lg">{list.name}</span>
+              <div className="flex gap-2">
                 <button
-                  onClick={() => toggleExpand(list.id)}
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  onClick={() => handleToggleList(list.id)}
+                  className="text-blue-500 hover:underline"
                 >
-                  {list.expanded ? "Collapse" : "Expand"}
+                  {activeListId === list.id ? "Close" : "Open"}
                 </button>
                 <button
-                  onClick={() => handleDeleteList(list.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-red-500"
+                  onClick={() => deleteList(list.id)}
+                  className="text-red-500 hover:underline"
                 >
                   Delete
                 </button>
               </div>
             </div>
 
-            {list.expanded && (
+            {/* Завдання завантажуються тільки коли список відкритий */}
+            {activeListId === list.id && (
               <div className="mt-4">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800">
-                  Tasks:
-                </h3>
-                <div className="mb-6 flex gap-3">
+                <div className="flex gap-2 mb-2">
                   <input
                     type="text"
-                    placeholder="Task name"
+                    className="border rounded px-3 py-2 w-full"
+                    placeholder="New task"
                     value={taskName}
                     onChange={(e) => setTaskName(e.target.value)}
-                    className="p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Task description"
-                    value={taskDescription}
-                    onChange={(e) => setTaskDescription(e.target.value)}
-                    className="p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
-                    onClick={() => handleCreateTask(list.id)}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    onClick={() => {
+                      if (taskName.trim()) {
+                        createTask(list.id, taskName);
+                        setTaskName("");
+                      }
+                    }}
+                    className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600"
                   >
-                    Add Task
+                    Add
                   </button>
                 </div>
 
-                <ul className="space-y-3">
+                {/* Відображення завдань */}
+                <ul>
                   {list.tasks.map((task) => (
                     <li
                       key={task.id}
-                      className="flex items-center justify-between p-3 bg-gray-100 border rounded-lg shadow-sm"
+                      className="flex justify-between items-center border-b py-2"
                     >
-                      <div className="flex items-center w-full space-x-3">
-                        <input
-                          type="text"
-                          value={task.name}
-                          onChange={(e) =>
-                            handleUpdateTask(
-                              list.id,
-                              task.id,
-                              e.target.value,
-                              task.description
-                            )
-                          }
-                          className="w-1/2 p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <input
-                          type="text"
-                          value={task.description}
-                          onChange={(e) =>
-                            handleUpdateTask(
-                              list.id,
-                              task.id,
-                              task.name,
-                              e.target.value
-                            )
-                          }
-                          className="w-1/2 p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                        <input
-                          type="checkbox"
-                          checked={task.completed}
-                          onChange={(e) =>
-                            handleToggleTask(list.id, task.id, e.target.checked)
-                          }
-                          className="ml-3"
-                        />
-                      </div>
-                      <button
-                        onClick={() => handleDeleteTask(list.id, task.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      <span
+                        className={`cursor-pointer ${
+                          task.completed ? "line-through text-gray-500" : ""
+                        }`}
+                        onClick={() =>
+                          toggleTaskCompletion(
+                            list.id,
+                            task.id,
+                            !task.completed
+                          )
+                        }
                       >
-                        Delete
+                        {task.name}
+                      </span>
+                      <button
+                        onClick={() => deleteTask(list.id, task.id)}
+                        className="text-red-500 hover:underline"
+                      >
+                        ❌
                       </button>
                     </li>
                   ))}
