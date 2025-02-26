@@ -10,12 +10,14 @@ interface TodoListProps {
 }
 
 const TodoList = ({ list, onDeleteList }: TodoListProps) => {
-  const { loadTasks, createTask } = useTodoStore();
+  const { loadTasks, createTask, updateList } = useTodoStore();
   const { user } = useAuthStore();
   const [taskName, setTaskName] = useState<string>("");
   const [taskDescription, setTaskDescription] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [currentRole, setCurrentRole] = useState<string>("");
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [listName, setListName] = useState<string>(list.name);
 
   useEffect(() => {
     if (list.collaborators && user) {
@@ -44,10 +46,43 @@ const TodoList = ({ list, onDeleteList }: TodoListProps) => {
     setTaskDescription("");
   };
 
+  const handleUpdateListName = async () => {
+    if (!listName.trim() || listName === list.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      await updateList(list.id, listName);
+      setIsEditingName(false);
+    } catch (error) {
+      console.error("Failed to update list name:", error);
+    }
+  };
+
   return (
     <li className="bg-white shadow rounded p-4 mb-4">
       <div className="flex justify-between items-center">
-        <span className="font-semibold text-lg">{list.name}</span>
+        <div className="flex items-center gap-2">
+          {isEditingName ? (
+            <input
+              type="text"
+              value={listName}
+              onChange={(e) => setListName(e.target.value)}
+              onBlur={handleUpdateListName}
+              onKeyDown={(e) => e.key === "Enter" && handleUpdateListName()}
+              autoFocus
+              className="border px-2 py-1 rounded"
+            />
+          ) : (
+            <span
+              className="font-semibold text-lg cursor-pointer"
+              onClick={() => currentRole !== "viewer" && setIsEditingName(true)}
+            >
+              {list.name}
+            </span>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <button
             onClick={handleToggleList}
