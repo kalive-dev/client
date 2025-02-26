@@ -25,7 +25,7 @@ interface TodoState {
   ) => Promise<void>;
 }
 
-export const useTodoStore = create<TodoState>((set, get) => ({
+export const useTodoStore = create<TodoState>((set) => ({
   lists: [],
 
   loadLists: async () => {
