@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
-
+import { Link } from "react-router-dom";
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -43,9 +43,9 @@ const Register = () => {
         {error && <p className="mb-4 text-red-500">{error}</p>}
         <p className="mt-4 text-center">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-500 hover:underline">
-            Log in
-          </a>
+          <Link to="/login" className="text-blue-500 hover:underline">
+            Sign in
+          </Link>
         </p>
         <button
           onClick={handleRegister}
