@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useTodoStore } from "../stores/todoStore";
 import { useAuthStore } from "../stores/authStore";
 import Header from "../components/Header";
 import TodoList from "../components/TodoList";
+import { debounce } from "lodash";
 
 const Dashboard = () => {
   const { lists, loadLists, createList, deleteList } = useTodoStore();
@@ -11,6 +12,13 @@ const Dashboard = () => {
   const [listName, setListName] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const debouncedLog = useCallback(
+    debounce((value: string) => {
+      console.log(value);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,6 +44,12 @@ const Dashboard = () => {
     } catch (err) {
       setError("Failed to create list.");
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setListName(value);
+    debouncedLog(value);
   };
 
   if (isLoading) {
@@ -68,7 +82,7 @@ const Dashboard = () => {
           className="border rounded px-3 py-2"
           placeholder="New list name"
           value={listName}
-          onChange={(e) => setListName(e.target.value)}
+          onChange={handleInputChange}
         />
         <button
           onClick={handleCreateList}
