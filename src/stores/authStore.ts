@@ -1,3 +1,4 @@
+// stores/authStore.ts
 import { create } from "zustand";
 import API from "../api";
 import { User } from "../types/auth";
@@ -7,6 +8,7 @@ interface AuthState {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  userId: number | null;
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -15,15 +17,19 @@ export const useAuthStore = create<AuthState>((set) => {
   return {
     user: storedUser ? JSON.parse(storedUser) : null,
     token: storedToken || null,
+    userId: storedUser ? JSON.parse(storedUser).id : null,
     login: async (email, password) => {
       try {
         const { data } = await API.post("/auth/login", { email, password });
+        const user = { id: data.data.id, email };
+        console.log("user id is" + user.id);
         localStorage.setItem("token", data.data.token);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ id: data.data.id, email })
-        ); // Save user to localStorage
-        set({ user: { id: data.data.id, email }, token: data.data.token });
+        localStorage.setItem("user", JSON.stringify(user));
+        set({
+          user: user,
+          token: data.data.token,
+          userId: data.data.id,
+        });
       } catch (error) {
         throw new Error("Login failed");
       }
@@ -31,7 +37,7 @@ export const useAuthStore = create<AuthState>((set) => {
     logout: () => {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      set({ user: null, token: null });
+      set({ user: null, token: null, userId: null });
     },
   };
 });

@@ -4,10 +4,12 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import CollaboratorList from "./components/CollaboratorList";
 
 function PrivateRoute({ element }: { element: JSX.Element }) {
   return localStorage.getItem("token") ? element : <Navigate to="/login" />;
 }
+
 function App() {
   return (
     <Routes>
@@ -18,7 +20,10 @@ function App() {
         path="/dashboard"
         element={<PrivateRoute element={<Dashboard />} />}
       />
-
+      <Route
+        path="/todolists/:todolistId/collaborators"
+        element={<PrivateRoute element={<CollaboratorList />} />}
+      />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

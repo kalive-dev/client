@@ -13,14 +13,25 @@ API.defaults.headers.common["Authorization"] = `Bearer ${localStorage.getItem(
   "token"
 )}`;
 
-// API запити для списків
+export const fetchCollaborators = (todolistId: number) =>
+  API.get(`/todolists/${todolistId}/collaborators`);
+
+export const apiAddCollaborator = (
+  listId: number,
+  email: string,
+  role: string
+) => API.post(`/todolists/${listId}/collaborators`, { email, role });
+
+export const apiRemoveCollaborator = (listId: number, userId: number) =>
+  API.delete(`/todolists/${listId}/collaborators/${userId}`);
+
 export const fetchTodoLists = () => API.get("/todolists");
 export const createTodoList = (name: string) =>
   API.post("/todolists", { name });
 export const updateTodoList = (id: number, name: string) =>
   API.put(`/todolists/${id}`, { name });
 export const deleteTodoList = (id: number) => API.delete(`/todolists/${id}`);
-// API запити для тудушок
+
 export const fetchTasks = (todolistId: number) =>
   API.get(`/todolists/${todolistId}/tasks`);
 export const createTask = (
