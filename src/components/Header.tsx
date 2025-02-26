@@ -5,12 +5,12 @@ const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    logout();
     navigate("/login");
   };
-
   return (
     <header className="w-full bg-blue-500 text-white py-4 px-6 flex justify-between items-center shadow-md">
       <h1 className="text-xl font-semibold">To-Do App</h1>

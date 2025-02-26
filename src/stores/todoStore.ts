@@ -8,18 +8,7 @@ import {
   deleteTask as apiDeleteTask,
   toggleTaskCompletion as apiToggleTaskCompletion,
 } from "../api";
-
-interface Task {
-  id: number;
-  name: string;
-  completed: boolean;
-}
-
-interface TodoList {
-  id: number;
-  name: string;
-  tasks: Task[];
-}
+import { Task, TodoList } from "../types/todo";
 
 interface TodoState {
   lists: TodoList[];
@@ -42,7 +31,12 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   loadLists: async () => {
     try {
       const { data } = await fetchTodoLists();
-      set({ lists: data.data.map((list: any) => ({ ...list, tasks: [] })) });
+      const formattedLists: TodoList[] = data.data.map((list: any) => ({
+        id: list.id,
+        name: list.name,
+        tasks: [],
+      }));
+      set({ lists: formattedLists });
     } catch (error) {
       console.error("Error loading lists:", error);
     }
@@ -51,9 +45,14 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   loadTasks: async (todolistId: number) => {
     try {
       const { data } = await fetchTasks(todolistId);
+      const formattedTasks: Task[] = data.data.map((task: any) => ({
+        id: task.id,
+        name: task.name,
+        completed: task.completed,
+      }));
       set((state) => ({
         lists: state.lists.map((list) =>
-          list.id === todolistId ? { ...list, tasks: data.data } : list
+          list.id === todolistId ? { ...list, tasks: formattedTasks } : list
         ),
       }));
     } catch (error) {
@@ -63,8 +62,13 @@ export const useTodoStore = create<TodoState>((set, get) => ({
 
   createList: async (name: string) => {
     try {
-      await createTodoList(name);
-      get().loadLists();
+      const { data } = await createTodoList(name);
+      const newList: TodoList = {
+        id: data.id,
+        name: data.name,
+        tasks: [],
+      };
+      set((state) => ({ lists: [...state.lists, newList] }));
     } catch (error) {
       console.error("Error creating list:", error);
     }
@@ -83,8 +87,19 @@ export const useTodoStore = create<TodoState>((set, get) => ({
 
   createTask: async (todolistId: number, name: string) => {
     try {
-      await apiCreateTask(todolistId, name, "");
-      get().loadTasks(todolistId);
+      const { data } = await apiCreateTask(todolistId, name, "");
+      const newTask: Task = {
+        id: data.id,
+        name: data.name,
+        completed: false,
+      };
+      set((state) => ({
+        lists: state.lists.map((list) =>
+          list.id === todolistId
+            ? { ...list, tasks: [...list.tasks, newTask] }
+            : list
+        ),
+      }));
     } catch (error) {
       console.error("Error creating task:", error);
     }
@@ -93,7 +108,16 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   deleteTask: async (todolistId: number, taskId: number) => {
     try {
       await apiDeleteTask(todolistId, taskId);
-      get().loadTasks(todolistId);
+      set((state) => ({
+        lists: state.lists.map((list) =>
+          list.id === todolistId
+            ? {
+                ...list,
+                tasks: list.tasks.filter((task) => task.id !== taskId),
+              }
+            : list
+        ),
+      }));
     } catch (error) {
       console.error("Error deleting task:", error);
     }
@@ -106,7 +130,18 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   ) => {
     try {
       await apiToggleTaskCompletion(todolistId, taskId, completed);
-      get().loadTasks(todolistId);
+      set((state) => ({
+        lists: state.lists.map((list) =>
+          list.id === todolistId
+            ? {
+                ...list,
+                tasks: list.tasks.map((task) =>
+                  task.id === taskId ? { ...task, completed } : task
+                ),
+              }
+            : list
+        ),
+      }));
     } catch (error) {
       console.error("Error toggling task completion:", error);
     }

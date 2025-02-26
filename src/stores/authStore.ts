@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import API from "../api";
+import { User } from "../types/auth";
 
 interface AuthState {
-  user: { id: number; email: string } | null;
+  user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -11,7 +12,6 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => {
   const storedUser = localStorage.getItem("user");
   const storedToken = localStorage.getItem("token");
-
   return {
     user: storedUser ? JSON.parse(storedUser) : null,
     token: storedToken || null,
@@ -30,7 +30,7 @@ export const useAuthStore = create<AuthState>((set) => {
     },
     logout: () => {
       localStorage.removeItem("token");
-      localStorage.removeItem("user"); // Remove user from localStorage
+      localStorage.removeItem("user");
       set({ user: null, token: null });
     },
   };
